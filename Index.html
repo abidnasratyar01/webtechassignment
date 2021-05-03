@@ -1,0 +1,246 @@
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="style.css">
+    <title>Document</title>
+    <script src="jquery3.6-dev.js"></script>
+    <style>
+        * {
+  font-family: sans-serif;
+}
+
+.content-table {
+  border-collapse: collapse;
+  margin: 25px 0;
+  font-size: 0.9em;
+  min-width: 500px;
+  border: solid 2px black;
+}
+
+.content-table th {
+  background-color: rgb(187, 179, 179);
+  color: black;
+  text-align: left;
+  font-weight: bold;
+}
+
+.content-table th,
+.content-table td {
+  padding: 12px 15px;
+}
+
+.content-table tbody tr {
+  border-bottom: 1px solid #dddddd;
+}
+
+.content-table tbody tr:nth-of-type(odd) {
+  background-color: #f3f3f3;
+}
+
+h6 {
+  display: inline;
+}
+a {
+  text-decoration: none;
+  color: black;
+}
+a:hover {
+  color: red;
+}
+
+.form {
+  border: 1px solid black;
+  background-color: #f2f3f4;
+  padding: 8px;
+  height: 230px;
+  width: 280px;
+}
+
+.form,
+input,
+select,
+button {
+  margin: 10px;
+  font-size: 15px;
+}
+
+.main-activity {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: row;
+  justify-content: center;
+}
+@media screen and (max-width: 980px) {
+  .main-activity {
+    flex-direction: column;
+  }
+}
+.main-activity > div {
+  margin: 10px;
+  padding: 20px;
+  font-size: 15px;
+}
+
+    </style>
+</head>
+<body>
+    <div class = "main-activity">
+        <div class="display">
+            <header>List of Person</header>
+            <table class="content-table" id="contents-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Gender</th>
+                        <th>Age</th>
+                        <th>City</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id = "entryData">
+
+                </tbody>
+            </table>
+        </div>
+        <div class="container">
+            <header>Add / Update Person form</header>
+            <form action="" id="my-form" class="form">
+                <label for="inputName" class="form-label">Name:</label>
+                <input type="text" class="form-control" id="inputName" required pattern="\s*?[a-zA-Z]{1,15}\s*?"><br>
+                
+                <label class="form-label">Gender:</label>
+                <input class="form-check-input" type="radio" name="gender" id="radio-male" value="male"  required>
+                <label class="form-check-label" for="radio-male">Male</label>
+
+                <input  class="form-check-input" type="radio" name="gender" id="radio-female" value="female">
+                <label class="form-check-label" for="radio-female">Female</label><br>
+
+                <label for="inputAge" class="form-label" style="padding-right: 15px;" >Age:</label>
+                <input type="number" class="form-control" id="inputAge" aria-describedby="ageHelp" style="width: 188px;" required min="1" max="120"><br>
+                <label for="inputCity" class="form-label" style="padding-right: 15px; ">City:</label>
+                <select class="form-select" id="inputCity" name="inputCity" style="width: 188px;" aria-label="Default select example" required>
+                    <option value="Lahore">Lahore</option>
+                    <option value="Islamabad">Islamabad</option>
+                    <option value="Karachi">Karachi</option>
+                    <option value="Peshawer">Peshawer</option>
+                </select><br>
+                <button onclick="resetForm()">reset</button>
+                <button id="addBtn" type="submit">add</button>
+                <button onclick="updateEntry()" id="updateBtn">update</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        var state = {
+    entries: [], 
+    count: 0, 
+    update: NaN,
+    isAddEnabled: true,
+}
+
+
+
+$(document).ready(function(){
+updateDOM();           
+}); 
+
+
+
+function getId() {
+    return state.count++;
+}
+
+function getEntry(event) {
+const entry = {}
+event.preventDefault();
+entry.name= $("#inputName").val();
+entry.gender = $("input[name='gender']:checked").val();
+entry.age = parseInt($("#inputAge").val());
+entry.city = $("#inputCity").children("option:selected").val();
+
+return entry;
+}
+
+
+$("#my-form").submit(() => {
+addEntry();
+})
+addEntry = () => {
+
+state.entries = [...state.entries, getEntry(event)]
+console.log(state.entries);
+updateDOM();
+}
+
+function updateDOM(){
+    
+    clearTable();
+    clearForm();
+    $("#updateBtn").attr('disabled', state.isAddEnabled);
+    $("#addBtn").attr('disabled', !state.isAddEnabled);
+    state.entries.map((entry,i) => {
+        const newEntry = `
+            <tr id="${i}">
+                <td>${entry.name}</td>
+                <td>${entry.gender}</td>
+                <td>${entry.age}</td>
+                <td>${entry.city}</td>
+                <td>
+                    <a data-id="${i}" href="#" onclick="fillForm()">Update </a>/ 
+                    <a data-id="${i}" href="#" onclick="removeEntry()">Remove</a>
+                </td>
+            </tr>
+        `
+        $("#entryData").append(newEntry);
+    });
+}
+
+
+function clearTable() {
+    
+    $("#entryData").empty();
+}
+
+removeEntry = () => {
+    let i = event.target.dataset.id;
+    const newEntries = [...state.entries]
+    newEntries.splice(i, 1);
+
+    state.entries = newEntries;
+    updateDOM();
+}
+
+function clearForm() {
+    document.querySelector("#inputName").focus();
+    $("#inputGender").val("");
+    $("#my-form").trigger("reset");
+}
+
+fillForm = () => {
+    state.update = event.target.dataset.id;
+    state.isAddEnabled = false;
+    updateDOM();
+    const e = state.entries[event.target.dataset.id];
+    $("#inputName").val(e.name);
+    $(`#radio-${e.gender}`).attr('checked', true);
+    $("#inputAge").val(e.age);
+    $(`option[value='${e.city}'`).attr("selected", true);
+}
+
+
+updateEntry = () => {
+    state.entries[state.update] = getEntry(event);
+    state.isAddEnabled = true;
+    updateDOM();
+}
+
+resetForm = () => {
+    event.preventDefault();
+    state.update = NaN; 
+    clearForm();
+    state.isAddEnabled = true;
+    updateDOM();
+}
+
+    </script>
+</body>
+</html>
